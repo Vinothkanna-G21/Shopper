@@ -4,6 +4,20 @@
 
 import UIKit
 
+
+enum WishListType: String {
+    case add, remove
+    
+    func getString() -> String {
+        switch self {
+        case .add:
+            return "add"
+        case .remove:
+            return "remove"
+        }
+    }
+}
+
 /// This class will display the Product List
 class ProductListVC: UIViewController {
 
@@ -11,8 +25,7 @@ class ProductListVC: UIViewController {
     @IBOutlet var productListTableView: UITableView!
     
     fileprivate var viewModel: ProductListVM!
-    
-    
+
     //MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,19 +58,45 @@ class ProductListVC: UIViewController {
 //MARK: - TableView Delagtes and Datasources
 extension ProductListVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.productList?.count ?? 0
+        return viewModel.getProductCount()
     }
-    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         guard let productCell = tableView.dequeueReusableCell(withIdentifier: ProductListCell.reuseIdentifier) as? ProductListCell,
             let product = viewModel.productList?[indexPath.row] else {
             return ProductListCell()
         }
-        
-        productCell.updateCellView(product)
+        let offerPriceStatus = viewModel.isOfferPriceAvailble(From: product)
+        productCell.updateCellView(product, isOfferPriceAvail: offerPriceStatus)
+        settingUpCellWishListActions(productCell, indexPath)
         return productCell
     }
+}
+
+//MARK: - TableView Cell ButtonActions/Helper Methods
+extension ProductListVC {
+    
+    @objc func performWishListAction(_ sender: UIButton) {
+        let index = sender.tag
+        guard let identifier = sender.accessibilityIdentifier else { return }
+        viewModel.updateProductWishList(index, wishListType: identifier)
+    }
+    
+    /// Setup the cell button actions
+    /// - Parameters:
+    ///   - productCell: ProductList Cell
+    ///   - indexPath: Selected cell IndexPath
+    fileprivate func settingUpCellWishListActions(_ productCell: ProductListCell, _ indexPath: IndexPath) {
+        ///Add Action
+        productCell.addButton.tag = indexPath.row
+        productCell.addButton.accessibilityIdentifier = WishListType.add.getString()
+        productCell.addButton.addTarget(self, action: #selector(performWishListAction), for: .touchUpInside)
+        ///Remove Action
+        productCell.removeButton.tag = indexPath.row
+        productCell.removeButton.accessibilityIdentifier = WishListType.remove.getString()
+        productCell.removeButton.addTarget(self, action: #selector(performWishListAction), for: .touchUpInside)
+    }
+
 }
 
 //MARK: - Product Viewmodel Delegates
