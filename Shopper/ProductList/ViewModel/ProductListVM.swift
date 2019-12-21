@@ -31,14 +31,24 @@ class ProductListVM {
     
     /// Get ProductList
     func getProductList() {
-        if let productData = UserDefaults.standard.data(forKey: "kProductList"),
-            let products = try? JSONDecoder().decode([Product].self, from: productData) {
-            self.productList = products
-            return
-        }
 
         productService.getProductListFromServer { products in
-            self.productList = products
+            self.updateWishList(data: products)
+        }
+    }
+    
+    /// Update the product wishlist from persistant data
+    /// - Parameter data: [Product]
+    func updateWishList(data: [Product]?) {
+     
+        self.productList = data
+
+        if let productData = UserDefaults.standard.data(forKey: "kProductList"),
+            let products = try? JSONDecoder().decode([Product].self, from: productData) {
+            
+            for product in products {
+                self.productList?.filter({$0.pId == product.pId}).first?.quantity = product.quantity
+            }
         }
     }
     

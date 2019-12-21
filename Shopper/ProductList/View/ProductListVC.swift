@@ -26,6 +26,9 @@ class ProductListVC: UIViewController {
     
     fileprivate var viewModel: ProductListVM!
 
+    private let wishListVCIdentifier = "WishListVC"
+    private let productDetailVCIdentifier = "ProductDetailsVC"
+
     //MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,6 +74,12 @@ extension ProductListVC: UITableViewDelegate, UITableViewDataSource {
         settingUpCellWishListActions(productCell, indexPath)
         return productCell
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        let product = viewModel?.productList?[indexPath.row]
+        navigateToDetailedPage(product)
+    }
 }
 
 //MARK: - TableView Cell ButtonActions/Helper Methods
@@ -95,6 +104,29 @@ extension ProductListVC {
         productCell.removeButton.tag = indexPath.row
         productCell.removeButton.accessibilityIdentifier = WishListType.remove.getString()
         productCell.removeButton.addTarget(self, action: #selector(performWishListAction), for: .touchUpInside)
+    }
+
+    fileprivate func navigateToWishListPage() {
+        
+        let storyBoard = UIStoryboard.init(name: wishListVCIdentifier, bundle: Bundle.main)
+        guard let wishListVC = storyBoard.instantiateViewController(withIdentifier: wishListVCIdentifier) as? WishListVC else {
+            return
+        }
+        wishListVC.wishListProduct = WishListVM.init(delegate: wishListVC)
+        wishListVC.wishListProduct?.products = viewModel.productList
+        self.navigationController?.pushViewController(wishListVC, animated: true)
+
+    }
+    
+    fileprivate func navigateToDetailedPage(_ value: Product?) {
+        
+        let storyBoard = UIStoryboard.init(name: productDetailVCIdentifier, bundle: Bundle.main)
+        guard let pDetailVC = storyBoard.instantiateViewController(withIdentifier: productDetailVCIdentifier) as? ProductDetailsVC else {
+            return
+        }
+        pDetailVC.viewModel = ProductDetailsVM.init(delegate: pDetailVC)
+        pDetailVC.viewModel?.product = value
+        self.navigationController?.pushViewController(pDetailVC, animated: true)
     }
 
 }
